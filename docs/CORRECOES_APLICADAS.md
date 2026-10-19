@@ -32,3 +32,7 @@ Os workflows e o script Python de configuração Android foram verificados estat
 - Atualizada a documentação de arquitetura.
 - Os workflows agora aplicam `dart format lib test` antes da análise, para que uma diferença de formatação não interrompa o pipeline antes de análise/testes/build. A formatação é feita no workspace efêmero do CI, não é enviada de volta ao repositório.
 - Limitação: este ambiente não tem Dart/Flutter e não possui acesso de rede para instalar o SDK; por isso não foi possível executar `flutter analyze`, testes ou builds. A ausência de erros de compilação só pode ser afirmada depois de um workflow bem-sucedido.
+
+## Ajuste do analisador
+
+A regra `curly_braces_in_flow_control_structures` foi desativada explicitamente em `analysis_options.yaml` para que avisos de estilo sobre chaves opcionais não interrompam o CI. As demais regras herdadas de `flutter_lints` continuam ativas. Isso não substitui a execução de `flutter analyze`, `flutter test` e do build no GitHub Actions; esses comandos precisam ser confirmados no ambiente com Flutter.
