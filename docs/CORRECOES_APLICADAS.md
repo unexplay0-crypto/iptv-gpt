@@ -36,3 +36,15 @@ Os workflows e o script Python de configuração Android foram verificados estat
 ## Ajuste do analisador
 
 A regra `curly_braces_in_flow_control_structures` foi desativada explicitamente em `analysis_options.yaml` para que avisos de estilo sobre chaves opcionais não interrompam o CI. As demais regras herdadas de `flutter_lints` continuam ativas. Isso não substitui a execução de `flutter analyze`, `flutter test` e do build no GitHub Actions; esses comandos precisam ser confirmados no ambiente com Flutter.
+
+## Redesign visual e usabilidade
+
+- Nova identidade visual escura com violeta como ação principal e verde-água como cor complementar; coral reservado ao estado ao vivo.
+- Refinados tema Material 3, hierarquia tipográfica, campos, botões, navegação e superfícies.
+- Atualizados cards de mídia com tratamento de imagem, gradiente, estado de foco, ação de reprodução e badges mais legíveis.
+- Ajustadas prateleiras horizontais, densidade de grade em celular e espaçamento de catálogo.
+- Atualizados cabeçalho e navegação lateral para TV, com alvos de foco maiores e borda mais clara.
+- Adicionada transição curta entre seções e tela de inicialização com identidade da marca.
+- Documentação completa em `docs/REDESIGN_UX.md`.
+
+Validação estática realizada: exatamente 10 arquivos Dart em `lib/`, imports internos resolvidos, workflows YAML válidos e delimitadores balanceados. `flutter analyze`, `flutter test` e build não foram executados neste ambiente porque o SDK Flutter/Dart não está instalado.

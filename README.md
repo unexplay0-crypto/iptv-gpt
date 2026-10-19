@@ -95,3 +95,6 @@ O workflow de release compila APK/AAB e publica ambos no GitHub Releases. O app 
 ## Testes manuais obrigatórios antes de distribuir
 
 Consulte [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md). Ainda é necessário testar um canal ao vivo, um VOD e um episódio reais em celular Android e Android TV/TV Box, incluindo credenciais especiais, URLs HTTP/HTTPS, erro 401/403/404, rede instável, controle remoto, PIN, cache e retomada. A compilação bem-sucedida não prova que todo provedor IPTV é compatível.
+## Redesign de experiência
+
+A direção visual foi atualizada para uma identidade de streaming escura com acento violeta, estados de foco de maior contraste, cards renovados e ajustes de densidade responsiva para celular e TV. A especificação de UX, navegação, acessibilidade e validação está em [`docs/REDESIGN_UX.md`](docs/REDESIGN_UX.md).

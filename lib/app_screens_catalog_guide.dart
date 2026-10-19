@@ -54,12 +54,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final tvLayout = width >= 850;
     final items = _filtered;
-    final columns = width >= 1500 ? 8 : width >= 1150 ? 6 : width >= 850 ? 5 : width >= 600 ? 4 : 3;
+    final columns = width >= 1600 ? 7 : width >= 1250 ? 6 : width >= 850 ? 5 : width >= 600 ? 4 : width < 390 ? 2 : 3;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(tvLayout ? 34 : 18, 18, tvLayout ? 34 : 18, 12),
+          padding: EdgeInsets.fromLTRB(tvLayout ? 38 : 18, tvLayout ? 24 : 18, tvLayout ? 38 : 18, 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -102,7 +102,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 );
               }),
               const SizedBox(height: 10),
-              Text('${items.length} itens', style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+              Row(children: [Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppTheme.accentSecondary, shape: BoxShape.circle)), const SizedBox(width: 8), Text('${items.length} títulos disponíveis', style: const TextStyle(fontSize: 12, color: AppTheme.textMuted, fontWeight: FontWeight.w600))]),
             ],
           ),
         ),
@@ -113,9 +113,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   padding: EdgeInsets.fromLTRB(tvLayout ? 34 : 18, 10, tvLayout ? 34 : 18, 28),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: columns,
-                    childAspectRatio: 0.56,
-                    crossAxisSpacing: tvLayout ? 22 : 12,
-                    mainAxisSpacing: tvLayout ? 20 : 14,
+                    childAspectRatio: width < 600 ? 0.56 : 0.62,
+                    crossAxisSpacing: tvLayout ? 24 : 14,
+                    mainAxisSpacing: tvLayout ? 24 : 18,
                   ),
                   itemCount: items.length,
                   itemBuilder: (context, index) => PosterCard(item: items[index], width: double.infinity, onTap: () => widget.onTap(items[index])),

@@ -15,7 +15,7 @@ class MediaShelf extends StatelessWidget {
   Widget build(BuildContext context) {
     if (items.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: EdgeInsets.only(bottom: tvLayout ? 29 : 23),
+      padding: EdgeInsets.only(bottom: tvLayout ? 34 : 27),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -36,7 +36,7 @@ class MediaShelf extends StatelessWidget {
           ),
           const SizedBox(height: 11),
           SizedBox(
-            height: tvLayout ? 282 : 245,
+            height: tvLayout ? 302 : 258,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: items.length > 25 ? 25 : items.length,
@@ -44,7 +44,7 @@ class MediaShelf extends StatelessWidget {
               separatorBuilder: (context, index) => const SizedBox(width: 13),
               itemBuilder: (context, index) => PosterCard(
                 item: items[index],
-                width: tvLayout ? 170 : 136,
+                width: tvLayout ? 184 : 144,
                 onTap: () => onTap(items[index]),
               ),
             ),
@@ -75,76 +75,89 @@ class _PosterCardState extends State<PosterCard> {
   @override
   Widget build(BuildContext context) {
     final selected = _focused || _hovered;
+    final isLive = widget.item.type == MediaType.live;
     return SizedBox(
       width: widget.width,
       child: FocusableActionDetector(
         onShowFocusHighlight: (value) => setState(() => _focused = value),
         onShowHoverHighlight: (value) => setState(() => _hovered = value),
         child: AnimatedScale(
-          scale: selected ? 1.045 : 1,
-          duration: const Duration(milliseconds: 130),
+          scale: selected ? 1.035 : 1,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOutCubic,
           child: Material(
             color: Colors.transparent,
+            borderRadius: BorderRadius.circular(15),
             child: InkWell(
               onTap: widget.onTap,
-              borderRadius: BorderRadius.circular(13),
-              focusColor: AppTheme.accent.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(15),
+              focusColor: Colors.transparent,
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 130),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(13),
-                  border: Border.all(color: selected ? AppTheme.accent : Colors.transparent, width: selected ? 2 : 1),
-                  boxShadow: selected ? [BoxShadow(color: AppTheme.accent.withValues(alpha: 0.14), blurRadius: 18)] : const [],
-                ),
+                duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: selected ? AppTheme.accent : Colors.transparent, width: selected ? 2 : 1),
+                  boxShadow: selected ? [BoxShadow(color: AppTheme.accent.withValues(alpha: 0.18), blurRadius: 22, spreadRadius: 1)] : const [],
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AspectRatio(
-                      aspectRatio: widget.item.type == MediaType.live ? 16 / 10 : 2 / 3,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Container(
-                              color: AppTheme.surfaceRaised,
-                              alignment: Alignment.center,
-                              child: Icon(_iconFor(widget.item.type), size: 38, color: AppTheme.accent.withValues(alpha: 0.85)),
-                            ),
-                            if (widget.item.posterUrl.isNotEmpty)
-                              Image.network(
-                                widget.item.posterUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stack) => const SizedBox.shrink(),
-                                loadingBuilder: (context, child, progress) => child,
+                    Expanded(
+                      flex: 7,
+                      child: AspectRatio(
+                        aspectRatio: isLive ? 16 / 10 : 2 / 3,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              DecoratedBox(
+                                decoration: const BoxDecoration(
+                                  gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF29243D), Color(0xFF171922), Color(0xFF11131A)]),
+                                ),
+                                child: Center(child: Icon(_iconFor(widget.item.type), size: 40, color: AppTheme.accent.withValues(alpha: 0.9))),
                               ),
-                            if (widget.item.type == MediaType.live)
-                              Positioned(
-                                left: 8,
-                                top: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(color: const Color(0xFFE33C51), borderRadius: BorderRadius.circular(6)),
-                                  child: const Text('AO VIVO', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                              if (widget.item.posterUrl.isNotEmpty)
+                                Image.network(
+                                  widget.item.posterUrl,
+                                  fit: BoxFit.cover,
+                                  filterQuality: FilterQuality.medium,
+                                  errorBuilder: (context, error, stack) => const SizedBox.shrink(),
+                                ),
+                              const DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x33000000), Colors.transparent, Color(0x66000000)], stops: [0, 0.42, 1]),
                                 ),
                               ),
-                            if (widget.item.isAdult)
-                              const Positioned(right: 7, top: 7, child: Icon(Icons.lock_rounded, size: 17, color: Colors.white)),
-                          ],
+                              if (isLive)
+                                Positioned(
+                                  left: 8,
+                                  top: 8,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                    decoration: BoxDecoration(color: AppTheme.live, borderRadius: BorderRadius.circular(6)),
+                                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                                      Icon(Icons.circle, size: 6, color: Colors.white),
+                                      SizedBox(width: 5),
+                                      Text('AO VIVO', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.6)),
+                                    ]),
+                                  ),
+                                ),
+                              if (widget.item.isAdult)
+                                Positioned(right: 7, top: 7, child: Container(padding: const EdgeInsets.all(5), decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.72), borderRadius: BorderRadius.circular(7)), child: const Icon(Icons.lock_rounded, size: 15, color: Colors.white))),
+                              if (selected)
+                                Center(child: Container(width: 48, height: 48, decoration: BoxDecoration(color: AppTheme.accent, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 12)]), child: const Icon(Icons.play_arrow_rounded, color: Color(0xFF100E1C), size: 32))),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 9),
-                    Text(
-                      widget.item.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13, fontWeight: selected ? FontWeight.w800 : FontWeight.w600, height: 1.18),
-                    ),
+                    Text(widget.item.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, fontWeight: selected ? FontWeight.w800 : FontWeight.w600, height: 1.2, color: selected ? Colors.white : const Color(0xFFE6E7ED))),
                     if (widget.showGroup) ...[
                       const SizedBox(height: 4),
-                      Text(widget.item.groupTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+                      Text(widget.item.groupTitle.isNotEmpty ? widget.item.groupTitle : widget.item.year, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: AppTheme.textMuted)),
                     ],
                   ],
                 ),

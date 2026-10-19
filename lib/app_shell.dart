@@ -126,7 +126,14 @@ class _ShellScreenState extends State<ShellScreen> {
                     ]),
                   ),
                 if (widget.controller.isLoading) const LinearProgressIndicator(minHeight: 2, color: AppTheme.accent, backgroundColor: AppTheme.surface),
-                Expanded(child: _buildPage(tvLayout)),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    child: KeyedSubtree(key: ValueKey(_section), child: _buildPage(tvLayout)),
+                  ),
+                ),
               ]),
             ),
           ),
@@ -177,7 +184,7 @@ class _ShellScreenState extends State<ShellScreen> {
   Future<void> _showMore() async {
     final selected = await showModalBottomSheet<_Section>(
       context: context,
-      backgroundColor: AppTheme.surface,
+      backgroundColor: const Color(0xFF171922),
       showDragHandle: true,
       builder: (context) => SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -204,22 +211,59 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        height: tvLayout ? 76 : 62,
+        height: tvLayout ? 82 : 62,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: tvLayout ? 31 : 13),
+          padding: EdgeInsets.fromLTRB(tvLayout ? 34 : 16, 4, tvLayout ? 34 : 12, 4),
           child: Row(children: [
             if (!tvLayout) ...[
-              Container(width: 31, height: 31, decoration: BoxDecoration(color: AppTheme.accent, borderRadius: BorderRadius.circular(9)), child: const Icon(Icons.play_arrow_rounded, color: Colors.black, size: 24)),
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppTheme.accent, AppTheme.accentSecondary]), borderRadius: BorderRadius.circular(11)),
+                child: const Icon(Icons.play_arrow_rounded, color: Color(0xFF100E1C), size: 27),
+              ),
               const SizedBox(width: 10),
-              const Text('UNEX VISION', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.4, fontSize: 13)),
-            ] else
-              Text('UNEX VISION', style: Theme.of(context).textTheme.titleLarge),
-            const Spacer(),
-            if (tvLayout) Padding(padding: const EdgeInsets.only(right: 16), child: Text('$itemCount itens', style: const TextStyle(color: AppTheme.textMuted, fontSize: 12))),
-            IconButton(onPressed: onSearch, tooltip: 'Buscar', icon: const Icon(Icons.search_rounded)),
-            IconButton(onPressed: onRefresh, tooltip: 'Atualizar lista', icon: const Icon(Icons.refresh_rounded)),
-            IconButton(onPressed: onSettings, tooltip: 'Configurações', icon: const Icon(Icons.settings_outlined)),
+              const Text('UNEX', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1, fontSize: 14)),
+              const SizedBox(width: 4),
+              const Text('VISION', style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 1.1, fontSize: 14, color: AppTheme.textMuted)),
+            ] else ...[
+              Text('Descubra algo para assistir', style: Theme.of(context).textTheme.titleLarge),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.outline)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.video_library_outlined, size: 16, color: AppTheme.accent), const SizedBox(width: 7), Text('$itemCount títulos', style: const TextStyle(fontSize: 12, color: AppTheme.textMuted, fontWeight: FontWeight.w700))]),
+              ),
+            ],
+            if (!tvLayout) const Spacer(),
+            _TopAction(icon: Icons.search_rounded, label: 'Buscar', onPressed: onSearch, tvLayout: tvLayout),
+            _TopAction(icon: Icons.refresh_rounded, label: 'Atualizar lista', onPressed: onRefresh, tvLayout: tvLayout),
+            _TopAction(icon: Icons.settings_outlined, label: 'Configurações', onPressed: onSettings, tvLayout: tvLayout),
           ]),
+        ),
+      );
+}
+
+class _TopAction extends StatelessWidget {
+  const _TopAction({required this.icon, required this.label, required this.onPressed, required this.tvLayout});
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final bool tvLayout;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(left: 4),
+        child: IconButton(
+          tooltip: label,
+          onPressed: onPressed,
+          style: IconButton.styleFrom(
+            minimumSize: Size(tvLayout ? 50 : 42, tvLayout ? 50 : 42),
+            backgroundColor: const Color(0xFF171922),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: AppTheme.outline)),
+          ),
+          icon: Icon(icon, size: tvLayout ? 23 : 21),
         ),
       );
 }
@@ -231,14 +275,14 @@ class _Sidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 238,
-        decoration: const BoxDecoration(color: Color(0xFF0B1017), border: Border(right: BorderSide(color: Color(0xFF202B36)))),
+        width: 226,
+        decoration: const BoxDecoration(color: Color(0xFF0D0E14), border: Border(right: BorderSide(color: Color(0xFF242630)))),
         child: SafeArea(
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(23, 22, 18, 26),
+              padding: const EdgeInsets.fromLTRB(22, 26, 16, 30),
               child: Row(children: [
-                Container(width: 41, height: 41, decoration: BoxDecoration(color: AppTheme.accent, borderRadius: BorderRadius.circular(13)), child: const Icon(Icons.play_arrow_rounded, color: Colors.black, size: 33)),
+                Container(width: 43, height: 43, decoration: BoxDecoration(gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppTheme.accent, AppTheme.accentSecondary]), borderRadius: BorderRadius.circular(14)), child: const Icon(Icons.play_arrow_rounded, color: Color(0xFF100E1C), size: 33)),
                 const SizedBox(width: 11),
                 const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('UNEX VISION', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1, fontSize: 12)), SizedBox(height: 4), Text('ENTRETENIMENTO', style: TextStyle(color: AppTheme.textMuted, fontSize: 9, letterSpacing: 1.1))])),
               ]),
@@ -298,13 +342,13 @@ class _SideItemState extends State<_SideItem> {
             onTap: () => widget.onSelect(widget.value),
             borderRadius: BorderRadius.circular(12),
             child: Container(
-              height: 47,
+              height: 50,
               padding: const EdgeInsets.symmetric(horizontal: 13),
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: _focused ? AppTheme.accent : Colors.transparent, width: 1.5)),
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(13), border: Border.all(color: _focused ? AppTheme.accent : Colors.transparent, width: 2)),
               child: Row(children: [
                 Icon(widget.icon, size: 19, color: active || _focused ? AppTheme.accent : AppTheme.textMuted),
                 const SizedBox(width: 13),
-                Expanded(child: Text(widget.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, fontWeight: active ? FontWeight.w800 : FontWeight.w500, color: active ? Colors.white : AppTheme.textMuted))),
+                Expanded(child: Text(widget.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, fontWeight: active ? FontWeight.w800 : FontWeight.w500, color: active || _focused ? Colors.white : AppTheme.textMuted))),
               ]),
             ),
           ),

@@ -21,12 +21,16 @@ class AppConstants {
 class AppTheme {
   AppTheme._();
 
-  static const background = Color(0xFF070A0F);
-  static const surface = Color(0xFF101720);
-  static const surfaceRaised = Color(0xFF17222E);
-  static const accent = Color(0xFF00D7F5);
-  static const accentSecondary = Color(0xFF8A7DFF);
-  static const textMuted = Color(0xFF9EADBB);
+  // A restrained streaming palette: near-black canvas, layered graphite surfaces,
+  // violet as the brand action, and red reserved for live content.
+  static const background = Color(0xFF08090D);
+  static const surface = Color(0xFF12141B);
+  static const surfaceRaised = Color(0xFF1B1E28);
+  static const accent = Color(0xFF9B8CFF);
+  static const accentSecondary = Color(0xFF5DE1D1);
+  static const live = Color(0xFFFF435A);
+  static const textMuted = Color(0xFFA5A9B7);
+  static const outline = Color(0xFF2A2D39);
 
   static ThemeData dark() {
     final scheme = ColorScheme.fromSeed(
@@ -35,7 +39,11 @@ class AppTheme {
       surface: surface,
       primary: accent,
       secondary: accentSecondary,
-      error: const Color(0xFFFF6B6B),
+      error: const Color(0xFFFF6B78),
+    );
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: outline),
     );
     return ThemeData(
       useMaterial3: true,
@@ -43,6 +51,7 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: background,
       visualDensity: VisualDensity.adaptivePlatformDensity,
+      splashFactory: InkSparkle.splashFactory,
       appBarTheme: const AppBarTheme(
         backgroundColor: background,
         foregroundColor: Colors.white,
@@ -53,56 +62,80 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: surface,
         elevation: 0,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         clipBehavior: Clip.antiAlias,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surface,
+        fillColor: const Color(0xFF151720),
         hintStyle: const TextStyle(color: textMuted),
         labelStyle: const TextStyle(color: textMuted),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF253240))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: accent, width: 1.5)),
-        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFFF6B6B))),
+        border: border,
+        enabledBorder: border,
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: accent, width: 1.8),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFFF6B78)),
+        ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 17),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(48, 48),
+          foregroundColor: const Color(0xFF100E1C),
+          backgroundColor: accent,
+          minimumSize: const Size(48, 50),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.1),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(48, 48),
-          side: const BorderSide(color: Color(0xFF344454)),
+          foregroundColor: Colors.white,
+          minimumSize: const Size(48, 50),
+          side: const BorderSide(color: outline),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: accent),
+      ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: const Color(0xFF0D1219),
+        height: 72,
+        backgroundColor: const Color(0xFF101117),
         indicatorColor: accent.withValues(alpha: 0.16),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         labelTextStyle: WidgetStateProperty.resolveWith((states) => TextStyle(
           color: states.contains(WidgetState.selected) ? accent : textMuted,
-          fontWeight: states.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500,
+          fontSize: 11,
+          fontWeight: states.contains(WidgetState.selected) ? FontWeight.w800 : FontWeight.w500,
         )),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: surface,
         selectedColor: accent.withValues(alpha: 0.18),
-        side: const BorderSide(color: Color(0xFF253240)),
+        side: const BorderSide(color: outline),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+        labelStyle: const TextStyle(fontWeight: FontWeight.w600),
       ),
-      dividerColor: const Color(0xFF24303C),
+      dividerColor: outline,
+      focusColor: accent.withValues(alpha: 0.18),
+      hoverColor: accent.withValues(alpha: 0.10),
       textTheme: const TextTheme(
-        headlineLarge: TextStyle(fontSize: 34, fontWeight: FontWeight.w800, letterSpacing: -0.7),
-        headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.4),
-        titleLarge: TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
-        titleMedium: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-        bodyLarge: TextStyle(fontSize: 16, height: 1.35),
-        bodyMedium: TextStyle(fontSize: 14, height: 1.35),
+        displayLarge: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, letterSpacing: -1.2, height: 1.02),
+        headlineLarge: TextStyle(fontSize: 34, fontWeight: FontWeight.w900, letterSpacing: -0.8),
+        headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+        headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.3),
+        titleLarge: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, letterSpacing: -0.2),
+        titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+        bodyLarge: TextStyle(fontSize: 16, height: 1.45),
+        bodyMedium: TextStyle(fontSize: 14, height: 1.4),
+        bodySmall: TextStyle(fontSize: 12, height: 1.35),
       ),
     );
   }

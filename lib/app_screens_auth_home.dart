@@ -286,9 +286,9 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (featured != null) _HeroFeature(item: featured, tvLayout: tvLayout, onPlay: () => onPlay(featured), onExplore: onSeeMovies),
+                  if (featured != null) _HeroFeature(item: featured, tvLayout: tvLayout, onPlay: () => onPlay(featured), onExplore: featured.type == MediaType.live ? onSeeLive : featured.type == MediaType.series ? onSeeSeries : onSeeMovies),
                   if (featured == null) _EmptyHero(onRefresh: onRefresh),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 34),
                   if (history.isNotEmpty) MediaShelf(title: 'Continue assistindo', items: history, onTap: onPlay, tvLayout: tvLayout, onSeeAll: onSeeHistory),
                   MediaShelf(title: 'Canais ao vivo', items: live, onTap: onPlay, tvLayout: tvLayout, onSeeAll: onSeeLive),
                   MediaShelf(title: 'Filmes para você', items: movies, onTap: onPlay, tvLayout: tvLayout, onSeeAll: onSeeMovies),
@@ -315,9 +315,9 @@ class _HeroFeature extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(26),
       child: SizedBox(
-        height: tvLayout ? 335 : 245,
+        height: tvLayout ? 360 : 258,
         width: double.infinity,
         child: Stack(
           fit: StackFit.expand,
@@ -334,8 +334,8 @@ class _HeroFeature extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
-                  colors: [AppTheme.background.withValues(alpha: 0.98), AppTheme.background.withValues(alpha: 0.68), AppTheme.background.withValues(alpha: 0.05)],
-                  stops: const [0, 0.57, 1],
+                  colors: [AppTheme.background.withValues(alpha: 0.99), AppTheme.background.withValues(alpha: 0.78), AppTheme.background.withValues(alpha: 0.12)],
+                  stops: const [0, 0.58, 1],
                 ),
               ),
             ),
@@ -354,11 +354,11 @@ class _HeroFeature extends StatelessWidget {
                         children: [
                           const Icon(Icons.auto_awesome_rounded, size: 15, color: AppTheme.accent),
                           const SizedBox(width: 7),
-                          Text(item.type == MediaType.live ? 'DESTAQUE AO VIVO' : 'DESTAQUE PARA VOCÊ', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: AppTheme.accent)),
+                          Text(item.type == MediaType.live ? 'DESTAQUE AO VIVO' : 'DESTAQUE PARA VOCÊ', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: AppTheme.accentSecondary)),
                         ],
                       ),
                       const SizedBox(height: 13),
-                      Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: tvLayout ? 31 : 23, fontWeight: FontWeight.w900, height: 1.08)),
+                      Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: tvLayout ? 36 : 25, fontWeight: FontWeight.w900, height: 1.06, letterSpacing: -0.5)),
                       if (item.year.isNotEmpty || item.groupTitle.isNotEmpty) ...[
                         const SizedBox(height: 10),
                         Text([if (item.year.isNotEmpty) item.year, item.groupTitle].join('  •  '), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
@@ -392,15 +392,17 @@ class _EmptyHero extends StatelessWidget {
   const _EmptyHero({required this.onRefresh});
   final Future<void> Function() onRefresh;
 
+  double tvLayoutHeight(BuildContext context) => MediaQuery.sizeOf(context).width >= 850 ? 360 : 258;
+
   @override
   Widget build(BuildContext context) => Container(
-        height: 245,
+        height: tvLayoutHeight(context),
         width: double.infinity,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppTheme.accent.withValues(alpha: 0.12)),
+          borderRadius: BorderRadius.circular(26),
+          border: Border.all(color: AppTheme.outline),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
