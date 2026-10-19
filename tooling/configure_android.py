@@ -53,7 +53,7 @@ def main() -> None:
         if found is None:
             found = ET.Element("uses-feature")
             found.set(attr("name"), feature_name)
-            root.insert(root.index(app), found)
+            root.insert(list(root).index(app), found)
         found.set(attr("required"), required)
 
     launch_filters = []
