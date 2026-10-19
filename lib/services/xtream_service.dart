@@ -94,6 +94,11 @@ class XtreamService {
       _tryAction(account, 'get_vod_streams'),
       _tryAction(account, 'get_series'),
     ]);
+    if (responses.every((response) => response == null)) {
+      throw const XtreamException(
+        'Não foi possível carregar canais, filmes ou séries. O servidor pode não suportar os endpoints Xtream ou estar indisponível.',
+      );
+    }
     return XtreamCatalog(
       live: _itemsFromXtream(responses[0], account, MediaType.live, liveCategories),
       movies: _itemsFromXtream(responses[1], account, MediaType.movie, movieCategories),

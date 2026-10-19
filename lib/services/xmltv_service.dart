@@ -11,6 +11,7 @@ class XmltvService {
   XmltvService({http.Client? client}) : _client = client ?? http.Client();
   final http.Client _client;
   final Map<String, List<EpgProgram>> _cache = {};
+  final Map<String, Map<String, List<String>>> _channelNames = {};
   final Map<String, DateTime> _cacheTime = {};
 
   Future<List<EpgProgram>> programsFor(String url, {required String channelId, required String channelName}) async {
@@ -40,6 +41,17 @@ class XmltvService {
       try {
         final document = XmlDocument.parse(body);
         programs = <EpgProgram>[];
+        final namesById = <String, List<String>>{};
+        for (final channel in document.findAllElements('channel')) {
+          final id = channel.getAttribute('id')?.trim();
+          if (id == null || id.isEmpty) continue;
+          namesById[id.toLowerCase()] = channel
+              .findElements('display-name')
+              .map((node) => node.innerText.trim())
+              .where((name) => name.isNotEmpty)
+              .toList();
+        }
+        _channelNames[key] = namesById;
         for (final element in document.findAllElements('programme').take(AppConstants.maxEpgPrograms)) {
           final titleNode = element.findElements('title').firstOrNull;
           final descNode = element.findElements('desc').firstOrNull;
@@ -61,14 +73,26 @@ class XmltvService {
       }
     }
     final wantedId = channelId.trim().toLowerCase();
-    final wantedName = channelName.trim().toLowerCase();
+    final wantedName = _normalizeChannelName(channelName);
+    final namesById = _channelNames[key] ?? const <String, List<String>>{};
     final matches = programs.where((item) {
-      if (wantedId.isNotEmpty && item.channelId.toLowerCase() == wantedId) return true;
-      return wantedName.isNotEmpty && item.channelId.toLowerCase().contains(wantedName);
+      final itemId = item.channelId.trim().toLowerCase();
+      if (wantedId.isNotEmpty && itemId == wantedId) return true;
+      if (wantedName.isEmpty) return false;
+      final displayNames = namesById[itemId] ?? const <String>[];
+      return displayNames.any((name) {
+        final normalized = _normalizeChannelName(name);
+        if (normalized == wantedName) return true;
+        return normalized.length >= 8 && wantedName.length >= 8 &&
+            (normalized.contains(wantedName) || wantedName.contains(normalized));
+      });
     }).toList()
       ..sort((a, b) => a.start.compareTo(b.start));
     return matches.where((item) => item.end.isAfter(DateTime.now())).take(30).toList();
   }
+
+  static String _normalizeChannelName(String value) =>
+      value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
 
   static String decodeMaybeBase64(String value) {
     final input = value.trim();

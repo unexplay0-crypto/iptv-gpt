@@ -13,6 +13,7 @@ class IptvAccount {
     this.password = '',
     this.playlistUrl = '',
     this.localPlaylistPath = '',
+    this.localPlaylistId = '',
     this.epgUrl = '',
   });
 
@@ -23,13 +24,15 @@ class IptvAccount {
   final String password;
   final String playlistUrl;
   final String localPlaylistPath;
+  /// Stable digest of imported playlist content; avoids collisions by filename.
+  final String localPlaylistId;
   final String epgUrl;
 
   String get providerKey {
     final identity = switch (source) {
       IptvSource.xtream => 'xtream|${_normalizedServer(serverUrl)}|${username.trim()}',
       IptvSource.m3uUrl => 'm3u|${playlistUrl.trim()}',
-      IptvSource.m3uFile => 'file|${label.trim().toLowerCase()}',
+      IptvSource.m3uFile => 'file|${localPlaylistId.isNotEmpty ? localPlaylistId : localPlaylistPath.trim()}',
     };
     return sha256.convert(utf8.encode(identity)).toString().substring(0, 24);
   }
@@ -42,6 +45,7 @@ class IptvAccount {
         password: password,
         playlistUrl: playlistUrl,
         localPlaylistPath: localPlaylistPath,
+        localPlaylistId: localPlaylistId,
         epgUrl: epgUrl ?? this.epgUrl,
       );
 
@@ -53,6 +57,7 @@ class IptvAccount {
         'password': password,
         'playlistUrl': playlistUrl,
         'localPlaylistPath': localPlaylistPath,
+        'localPlaylistId': localPlaylistId,
         'epgUrl': epgUrl,
       };
 
@@ -70,6 +75,7 @@ class IptvAccount {
       password: json['password']?.toString() ?? '',
       playlistUrl: json['playlistUrl']?.toString() ?? '',
       localPlaylistPath: json['localPlaylistPath']?.toString() ?? '',
+      localPlaylistId: json['localPlaylistId']?.toString() ?? '',
       epgUrl: json['epgUrl']?.toString() ?? '',
     );
   }

@@ -63,12 +63,29 @@ class LocalLibraryStore {
   Future<String> readPinSalt(String provider) async => await _preferences.getString(_key(provider, 'pin_salt')) ?? '';
   Future<String> readPinHash(String provider) async => await _preferences.getString(_key(provider, 'pin_hash')) ?? '';
 
+  static const _pinIterations = 60000;
+
   Future<void> setPin(String provider, String pin) async {
     final salt = List<int>.generate(16, (_) => Random.secure().nextInt(256));
     final saltText = base64Url.encode(salt);
-    final hash = sha256.convert(utf8.encode('$saltText:$pin')).toString();
+    final derived = _derivePin(pin, salt, _pinIterations);
+    final encodedHash = 'pbkdf2-sha256:$_pinIterations:${base64Url.encode(derived)}';
     await _preferences.setString(_key(provider, 'pin_salt'), saltText);
-    await _preferences.setString(_key(provider, 'pin_hash'), hash);
+    await _preferences.setString(_key(provider, 'pin_hash'), encodedHash);
+  }
+
+  List<int> _derivePin(String pin, List<int> salt, int iterations) {
+    final passwordBytes = utf8.encode(pin);
+    final hmac = Hmac(sha256, passwordBytes);
+    var block = hmac.convert([...salt, 0, 0, 0, 1]).bytes;
+    final derived = List<int>.from(block);
+    for (var iteration = 1; iteration < iterations; iteration++) {
+      block = hmac.convert(block).bytes;
+      for (var index = 0; index < derived.length; index++) {
+        derived[index] ^= block[index];
+      }
+    }
+    return derived;
   }
 
   Future<bool> hasPin(String provider) async => (await readPinHash(provider)).isNotEmpty;
@@ -78,11 +95,33 @@ class LocalLibraryStore {
     final lockUntil = await _preferences.getInt(_key(provider, 'pin_lock_until')) ?? 0;
     if (lockUntil > now) return false;
 
-    final salt = await readPinSalt(provider);
+    final saltText = await readPinSalt(provider);
     final expected = await readPinHash(provider);
-    if (salt.isEmpty || expected.isEmpty) return false;
-    final actual = sha256.convert(utf8.encode('$salt:$pin')).toString();
-    final matches = constantTimeEquals(actual, expected);
+    if (saltText.isEmpty || expected.isEmpty) return false;
+    late final List<int> salt;
+    try {
+      salt = base64Url.decode(saltText);
+    } on FormatException {
+      return false;
+    }
+    var matches = false;
+    if (expected.startsWith('pbkdf2-sha256:')) {
+      final parts = expected.split(':');
+      if (parts.length == 3) {
+        final iterations = int.tryParse(parts[1]);
+        if (iterations != null && iterations >= 10000 && iterations <= 200000) {
+          final actual = base64Url.encode(_derivePin(pin, salt, iterations));
+          matches = constantTimeEquals(actual, parts[2]);
+        }
+      }
+    } else {
+      // Backward compatibility: verify old SHA-256 PINs and upgrade on success.
+      final legacy = sha256.convert(utf8.encode('$saltText:$pin')).toString();
+      if (constantTimeEquals(legacy, expected)) {
+        matches = true;
+        await setPin(provider, pin);
+      }
+    }
     if (matches) {
       await _preferences.remove(_key(provider, 'pin_attempts'));
       await _preferences.remove(_key(provider, 'pin_lock_until'));

@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 
 import '../core/app_constants.dart';
@@ -111,16 +113,20 @@ class AppController extends ChangeNotifier {
 
   Future<void> connectM3uFile({required String filename, required String contents, String epgUrl = ''}) async {
     final label = filename.replaceAll(RegExp(r'\.(m3u8?|txt)$', caseSensitive: false), '').trim();
+    final contentId = sha256.convert(utf8.encode(contents)).toString();
     final candidate = IptvAccount(
       source: IptvSource.m3uFile,
       label: label.isEmpty ? 'Lista importada' : label,
+      localPlaylistId: contentId,
       epgUrl: epgUrl.trim(),
     );
+    _playlistService.validateImportedContent(contents, providerKey: candidate.providerKey);
     final path = await _playlistService.saveImportedFile(filename, contents, candidate.providerKey);
     await _connect(IptvAccount(
       source: IptvSource.m3uFile,
       label: candidate.label,
       localPlaylistPath: path,
+      localPlaylistId: contentId,
       epgUrl: candidate.epgUrl,
     ));
   }
@@ -174,7 +180,9 @@ class AppController extends ChangeNotifier {
     _favorites = await _libraryStore.readFavorites(source.providerKey);
     _history = await _secureStore.readHistory(source.providerKey);
     _progress = await _libraryStore.readProgress(source.providerKey);
-    showAdultContent = await _libraryStore.readAdultVisibility(source.providerKey);
+    // Adult content unlock is session-only; always require the PIN again after restart.
+    showAdultContent = false;
+    await _libraryStore.writeAdultVisibility(source.providerKey, false);
   }
 
   Future<void> refreshCatalog() async {
@@ -340,7 +348,8 @@ class AppController extends ChangeNotifier {
     final current = account;
     if (current == null) return;
     showAdultContent = show;
-    await _libraryStore.writeAdultVisibility(current.providerKey, show);
+    // Never persist an unlocked state across app restarts.
+    await _libraryStore.writeAdultVisibility(current.providerKey, false);
     notifyListeners();
   }
 

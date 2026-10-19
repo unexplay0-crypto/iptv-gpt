@@ -10,12 +10,11 @@ import '../models/media_item.dart';
 import 'm3u_parser.dart';
 
 class PlaylistService {
-  PlaylistService({http.Client? client, M3uParser parser = const M3uParser()})
-      : _client = client ?? http.Client(),
-        _parser = parser;
+  PlaylistService({http.Client? client, this.parser = const M3uParser()})
+      : _client = client ?? http.Client();
 
   final http.Client _client;
-  final M3uParser _parser;
+  final M3uParser parser;
 
   Future<List<MediaItem>> load(IptvAccount account) async {
     switch (account.source) {
@@ -27,7 +26,7 @@ class PlaylistService {
           throw const PlaylistException('O arquivo da lista não está mais disponível. Importe a lista novamente.');
         }
         final content = await file.readAsString();
-        return _parser.parse(content, providerKey: account.providerKey);
+        return _parseAndValidate(content, account.providerKey);
       case IptvSource.xtream:
         throw StateError('PlaylistService não carrega contas Xtream.');
     }
@@ -46,7 +45,20 @@ class PlaylistService {
     if (!content.contains('#EXTM3U') && !content.contains('#EXTINF')) {
       throw const PlaylistException('A resposta não parece ser uma lista M3U válida.');
     }
-    return _parser.parse(content, providerKey: providerKey);
+    return _parseAndValidate(content, providerKey);
+  }
+
+  /// Validates an imported M3U before writing it to app storage.
+  void validateImportedContent(String content, {required String providerKey}) {
+    _parseAndValidate(content, providerKey);
+  }
+
+  List<MediaItem> _parseAndValidate(String content, String providerKey) {
+    final items = parser.parse(content, providerKey: providerKey);
+    if (items.isEmpty) {
+      throw const PlaylistException('A lista M3U não contém canais ou mídias válidos. Confira o arquivo ou a URL.');
+    }
+    return items;
   }
 
   Future<String> saveImportedFile(String filename, String contents, String providerKey) async {

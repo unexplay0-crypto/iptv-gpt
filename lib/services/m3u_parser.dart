@@ -46,7 +46,7 @@ class M3uParser {
       final title = _titleFromExtinf(extinf).trim().isEmpty
           ? line.split('/').last
           : _titleFromExtinf(extinf).trim();
-      final inferred = _inferType('$group $title');
+      final inferred = _inferType(group, title, extinf);
       final canonical = '$providerKey|${inferred.name}|$tvgId|$title|$line';
       final id = sha256.convert(utf8.encode(canonical)).toString().substring(0, 32);
       result.add(MediaItem(
@@ -86,13 +86,26 @@ class M3uParser {
     return '';
   }
 
-  MediaType _inferType(String input) {
-    final value = input.toLowerCase();
-    if (RegExp(r'\b(series|séries|serie|temporada|season|epis[oó]dio|episode)\b').hasMatch(value)) {
+  MediaType _inferType(String group, String title, String extinf) {
+    final titleFromExtinf = _titleFromExtinf(extinf);
+    final extinfMetadata = titleFromExtinf.isEmpty
+        ? extinf
+        : extinf.substring(0, extinf.length - titleFromExtinf.length);
+    final explicitType = (_attribute(extinf, 'tvg-type') ?? _attribute(extinf, 'type') ?? '').toLowerCase();
+    if (RegExp(r'\b(series|serie|tvshow|show)\b').hasMatch(explicitType)) return MediaType.series;
+    if (RegExp(r'\b(movie|film|vod)\b').hasMatch(explicitType)) return MediaType.movie;
+    final metadata = '${group.toLowerCase()} ${extinfMetadata.toLowerCase()}';
+    // Category/EXTINF metadata is a stronger signal than a title that merely
+    // happens to contain words such as "movie" or "series".
+    if (RegExp(r'\b(series|séries|serie|temporada|season|epis[oó]dio|episode)\b').hasMatch(metadata)) {
       return MediaType.series;
     }
-    if (RegExp(r'\b(filmes|movie|movies|vod|cinema|film|filme)\b').hasMatch(value)) {
+    if (RegExp(r'\b(filmes|movie|movies|vod|cinema|film|filme)\b').hasMatch(metadata)) {
       return MediaType.movie;
+    }
+    final titleValue = title.toLowerCase();
+    if (RegExp(r'\b(temporada|season|epis[oó]dio|episode)\b').hasMatch(titleValue)) {
+      return MediaType.series;
     }
     return MediaType.live;
   }
