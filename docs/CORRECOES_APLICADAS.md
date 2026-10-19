@@ -16,3 +16,10 @@
 ## Validação e limitações
 
 Os workflows e o script Python de configuração Android foram verificados estaticamente, e os YAML foram carregados por parser. Este ambiente não possui Flutter/Dart SDK; portanto não foi possível executar `flutter pub get`, `dart format`, `flutter analyze`, `flutter test`, `flutter build apk` nem `flutter build appbundle`. A compilação só pode ser confirmada após a execução do GitHub Actions. O projeto não inclui `pubspec.lock` porque ele precisa ser gerado pelo resolvedor Flutter real (`flutter pub get`) e versionado depois de validar as versões.
+
+## Reforço de qualidade contínua (19/10/2026)
+
+- A CI agora executa `dart format --output=none --set-exit-if-changed lib test`: a formatação é verificada sem modificar arquivos silenciosamente durante o workflow.
+- A CI usa `flutter analyze --no-pub` sem `--no-fatal-infos`, de modo que avisos informativos também precisam ser corrigidos em vez de ocultados.
+- O fluxo de build continua executando testes e builds de APK/AAB antes de disponibilizar artefatos.
+- As correções funcionais descritas nas seções anteriores devem ser consideradas confirmadas apenas quando os workflows passarem. Neste ambiente não há Flutter/Dart instalado, então não foi possível executar análise, testes ou compilação localmente.
