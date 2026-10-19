@@ -59,34 +59,58 @@ class _CatalogScreenState extends State<CatalogScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(tvLayout ? 38 : 18, tvLayout ? 24 : 18, tvLayout ? 38 : 18, 14),
+          padding: EdgeInsets.fromLTRB(tvLayout ? 38 : 14, tvLayout ? 24 : 10, tvLayout ? 38 : 14, tvLayout ? 14 : 6),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(widget.title, style: Theme.of(context).textTheme.headlineMedium),
-              if (widget.subtitle != null) ...[
+              Text(widget.title, style: tvLayout ? Theme.of(context).textTheme.headlineMedium : Theme.of(context).textTheme.titleLarge),
+              if (widget.subtitle != null && tvLayout) ...[
                 const SizedBox(height: 6),
                 Text(widget.subtitle!, style: const TextStyle(color: AppTheme.textMuted)),
               ],
-              const SizedBox(height: 17),
+              SizedBox(height: tvLayout ? 17 : 8),
               LayoutBuilder(builder: (context, constraints) {
+                final searchField = TextField(
+                  controller: _search,
+                  autofocus: widget.searchMode,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    isDense: !tvLayout,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: tvLayout ? 16 : 10),
+                    hintText: widget.searchMode ? 'Buscar canais, filmes e séries' : 'Filtrar neste catálogo',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    prefixIconConstraints: BoxConstraints(minWidth: tvLayout ? 48 : 38, minHeight: 40),
+                    suffixIcon: _search.text.isEmpty ? null : IconButton(onPressed: () { _search.clear(); setState(() {}); }, icon: const Icon(Icons.close_rounded)),
+                  ),
+                );
+                if (!tvLayout) {
+                  return Row(children: [
+                    Expanded(child: searchField),
+                    if (_groups.length > 1) ...[
+                      const SizedBox(width: 7),
+                      PopupMenuButton<String>(
+                        tooltip: 'Filtrar por categoria',
+                        initialValue: _group,
+                        onSelected: (value) => setState(() => _group = value),
+                        itemBuilder: (context) => _groups.map((value) => PopupMenuItem<String>(value: value, child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis))).toList(),
+                        child: Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(color: AppTheme.surface, border: Border.all(color: AppTheme.outline), borderRadius: BorderRadius.circular(12)),
+                          child: Stack(alignment: Alignment.center, children: [
+                            const Icon(Icons.filter_list_rounded),
+                            if (_group != 'Todas') Positioned(right: 9, top: 9, child: Container(width: 7, height: 7, decoration: const BoxDecoration(color: AppTheme.accentSecondary, shape: BoxShape.circle))),
+                          ]),
+                        ),
+                      ),
+                    ],
+                  ]);
+                }
                 return Wrap(
                   spacing: 10,
                   runSpacing: 10,
                   children: [
-                    SizedBox(
-                      width: constraints.maxWidth > 620 ? 370 : constraints.maxWidth,
-                      child: TextField(
-                        controller: _search,
-                        autofocus: widget.searchMode,
-                        onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          hintText: widget.searchMode ? 'Buscar canais, filmes e séries' : 'Filtrar neste catálogo',
-                          prefixIcon: const Icon(Icons.search_rounded),
-                          suffixIcon: _search.text.isEmpty ? null : IconButton(onPressed: () { _search.clear(); setState(() {}); }, icon: const Icon(Icons.close_rounded)),
-                        ),
-                      ),
-                    ),
+                    SizedBox(width: constraints.maxWidth > 620 ? 370 : constraints.maxWidth, child: searchField),
                     if (_groups.length > 1)
                       SizedBox(
                         width: constraints.maxWidth > 620 ? 230 : constraints.maxWidth,
@@ -101,7 +125,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   ],
                 );
               }),
-              const SizedBox(height: 10),
+              SizedBox(height: tvLayout ? 10 : 5),
               Row(children: [Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppTheme.accentSecondary, shape: BoxShape.circle)), const SizedBox(width: 8), Text('${items.length} títulos disponíveis', style: const TextStyle(fontSize: 12, color: AppTheme.textMuted, fontWeight: FontWeight.w600))]),
             ],
           ),

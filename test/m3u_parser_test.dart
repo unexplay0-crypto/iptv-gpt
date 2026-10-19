@@ -50,6 +50,21 @@ https://stream.example/live.ts
       expect(first, hasLength(32));
     });
 
+    test('separa episódios M3U por série, temporada e número do episódio', () {
+      const playlist = '''#EXTM3U
+#EXTINF:-1 group-title="Séries",The Office S01E02 - Dundies
+https://stream.example/office-s01e02.mp4
+#EXTINF:-1 group-title="Séries",The Office S02E01 - The Dundies
+https://stream.example/office-s02e01.mp4
+''';
+      final items = parser.parse(playlist, providerKey: 'series-test');
+      expect(items.map((item) => item.type), everyElement(MediaType.episode));
+      expect(items.map((item) => item.seriesId).toSet(), hasLength(1));
+      expect(items.map((item) => item.groupTitle).toSet(), {'The Office'});
+      expect(items.map((item) => item.seasonNumber), [1, 2]);
+      expect(items.map((item) => item.episodeNumber), [2, 1]);
+    });
+
     test('marca nomes de conteúdo adulto para que sejam ocultados pelo filtro parental', () {
       const playlist = '#EXTM3U\n#EXTINF:-1 group-title="Adult XXX",Canal 18+\nhttps://example.com/a.ts\n';
       expect(parser.parse(playlist, providerKey: 'x').single.isAdult, isTrue);

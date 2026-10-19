@@ -54,6 +54,11 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
     final item = _details ?? widget.series;
     final width = MediaQuery.sizeOf(context).width;
     final tvLayout = width >= 900;
+    final episodesBySeason = <int, List<MediaItem>>{};
+    for (final episode in _episodes) {
+      episodesBySeason.putIfAbsent(episode.seasonNumber, () => []).add(episode);
+    }
+    final seasons = episodesBySeason.keys.toList()..sort();
     return Scaffold(
       appBar: AppBar(title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis)),
       body: ListView(
@@ -88,24 +93,32 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
           if (_error != null) Text(_error!, style: const TextStyle(color: Color(0xFFFFA0AA))),
           if (!_loading && _episodes.isEmpty && _error == null)
             const Text('Não foi possível encontrar episódios para esta série.', style: TextStyle(color: AppTheme.textMuted)),
-          ..._episodes.map((episode) => Card(
-                margin: const EdgeInsets.only(bottom: 9),
-                child: ListTile(
-                  autofocus: false,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+          ...seasons.map((season) {
+            final seasonEpisodes = episodesBySeason[season]!;
+            return Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: ExpansionTile(
+                initiallyExpanded: season == seasons.first,
+                leading: const Icon(Icons.video_library_rounded, color: AppTheme.accent),
+                title: Text(season == 0 ? 'Episódios' : 'Temporada ${season.toString().padLeft(2, '0')}'),
+                subtitle: Text('${seasonEpisodes.length} ${seasonEpisodes.length == 1 ? 'episódio' : 'episódios'}', style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                children: seasonEpisodes.map((episode) => ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   leading: Container(
-                    width: 62,
-                    height: 48,
+                    width: 54,
+                    height: 44,
                     decoration: BoxDecoration(color: AppTheme.surfaceRaised, borderRadius: BorderRadius.circular(9)),
                     alignment: Alignment.center,
-                    child: Text('${episode.seasonNumber.toString().padLeft(2, '0')} • ${episode.episodeNumber.toString().padLeft(2, '0')}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
+                    child: Text('E${episode.episodeNumber.toString().padLeft(2, '0')}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                   ),
                   title: Text(episode.title, maxLines: 2, overflow: TextOverflow.ellipsis),
                   subtitle: episode.description.isEmpty ? null : Text(episode.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.textMuted)),
-                  trailing: const Icon(Icons.play_circle_outline_rounded, color: AppTheme.accent, size: 29),
+                  trailing: const Icon(Icons.play_circle_outline_rounded, color: AppTheme.accent, size: 27),
                   onTap: () => widget.onPlay(episode),
-                ),
-              )),
+                )).toList(),
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -127,6 +140,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _epg;
   late final TextEditingController _tmdb;
   bool _busy = false;
+  bool _parentalBusy = false;
 
   @override
   void initState() {
@@ -183,6 +197,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _changePin() async {
+    if (_parentalBusy) return;
+    setState(() => _parentalBusy = true);
+    try {
     final hasPin = await widget.controller.hasParentalPin();
     if (hasPin) {
       final existing = await _askPin(title: 'Confirmar PIN atual', label: 'PIN atual');
@@ -219,11 +236,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (newPin == null) return;
     await widget.controller.setParentalPin(newPin);
     _message('PIN parental salvo com segurança.');
+    } catch (_) {
+      _message('Não foi possível salvar o PIN. Verifique o armazenamento do aparelho e tente novamente.');
+    } finally {
+      if (mounted) setState(() => _parentalBusy = false);
+    }
   }
 
   Future<void> _toggleAdult(bool show) async {
+    if (_parentalBusy) return;
+    setState(() => _parentalBusy = true);
+    try {
     if (!show) {
       await widget.controller.setAdultVisibility(false);
+      _message('Conteúdo adulto bloqueado.');
       return;
     }
     final hasPin = await widget.controller.hasParentalPin();
@@ -239,6 +265,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
     await widget.controller.setAdultVisibility(true);
     _message('Conteúdo adulto liberado nesta conta.');
+    } catch (_) {
+      _message('Não foi possível alterar o controle parental. Tente novamente.');
+    } finally {
+      if (mounted) setState(() => _parentalBusy = false);
+    }
   }
 
   Future<void> _saveEpg() async {
@@ -357,7 +388,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Card(child: Column(children: [
                 SwitchListTile.adaptive(
                   value: widget.controller.showAdultContent,
-                  onChanged: _toggleAdult,
+                  onChanged: _parentalBusy ? null : _toggleAdult,
                   secondary: const Icon(Icons.shield_rounded, color: AppTheme.accent),
                   title: const Text('Mostrar conteúdo adulto'),
                   subtitle: Text(widget.controller.showAdultContent ? 'Conteúdo adulto está liberado nesta conta.' : 'Conteúdo identificado como adulto fica oculto.', style: const TextStyle(color: AppTheme.textMuted)),
@@ -365,10 +396,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const Divider(height: 1, indent: 18, endIndent: 18),
                 ListTile(
                   leading: const Icon(Icons.password_rounded),
-                  title: const Text('Configurar / alterar PIN'),
+                  title: Text(_parentalBusy ? 'Salvando controle parental…' : 'Configurar / alterar PIN'),
                   subtitle: const Text('PIN numérico de 4 a 8 dígitos', style: TextStyle(color: AppTheme.textMuted)),
                   trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: _changePin,
+                  onTap: _parentalBusy ? null : _changePin,
                 ),
               ])),
               const SizedBox(height: 20),

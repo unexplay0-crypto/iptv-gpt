@@ -16,13 +16,15 @@ class AppController extends ChangeNotifier {
     XmltvService? xmltvService,
     MetadataService? metadataService,
     UpdateService? updateService,
+    CatalogCacheStore? catalogCache,
   })  : _secureStore = secureStore ?? SecureAccountStore(),
         _libraryStore = libraryStore ?? LocalLibraryStore(),
         _playlistService = playlistService ?? PlaylistService(),
         _xtreamService = xtreamService ?? XtreamService(),
         _xmltvService = xmltvService ?? XmltvService(),
         _metadataService = metadataService ?? MetadataService(),
-        _updateService = updateService ?? UpdateService();
+        _updateService = updateService ?? UpdateService(),
+        _catalogCache = catalogCache ?? CatalogCacheStore();
 
   final SecureAccountStore _secureStore;
   final LocalLibraryStore _libraryStore;
@@ -31,6 +33,7 @@ class AppController extends ChangeNotifier {
   final XmltvService _xmltvService;
   final MetadataService _metadataService;
   final UpdateService _updateService;
+  final CatalogCacheStore _catalogCache;
 
   IptvAccount? account;
   List<MediaItem> _items = [];
@@ -48,7 +51,30 @@ class AppController extends ChangeNotifier {
   List<MediaItem> get allItems => List.unmodifiable(_visible(_items));
   List<MediaItem> get liveChannels => List.unmodifiable(_visible(_items).where((item) => item.type == MediaType.live));
   List<MediaItem> get movies => List.unmodifiable(_visible(_items).where((item) => item.type == MediaType.movie));
-  List<MediaItem> get series => List.unmodifiable(_visible(_items).where((item) => item.type == MediaType.series));
+  List<MediaItem> get series {
+    final visibleItems = _visible(_items);
+    final catalogSeries = visibleItems.where((item) => item.type == MediaType.series).toList();
+    final episodes = visibleItems.where((item) => item.type == MediaType.episode && item.seriesId.isNotEmpty);
+    final grouped = <String, List<MediaItem>>{};
+    for (final episode in episodes) {
+      grouped.putIfAbsent(episode.seriesId, () => []).add(episode);
+    }
+    for (final entry in grouped.entries) {
+      final groupEpisodes = entry.value;
+      final first = groupEpisodes.first;
+      catalogSeries.add(MediaItem(
+        id: entry.key,
+        title: first.groupTitle,
+        type: MediaType.series,
+        groupTitle: 'Séries',
+        posterUrl: first.posterUrl,
+        description: first.description,
+        seriesId: entry.key,
+      ));
+    }
+    catalogSeries.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+    return List.unmodifiable(catalogSeries);
+  }
   List<MediaItem> get favorites => List.unmodifiable(_visible(_items).where((item) => _favorites.contains(item.id)));
   List<MediaItem> get history => List.unmodifiable(_visible(_history));
   int get totalItems => _items.length;
@@ -131,6 +157,7 @@ class AppController extends ChangeNotifier {
       await _secureStore.saveAccount(candidate);
       account = candidate;
       _items = items;
+      await _writeCatalogCache(candidate.providerKey, items);
       await _loadLibraryState(candidate);
       errorMessage = null;
     } catch (error) {
@@ -139,6 +166,14 @@ class AppController extends ChangeNotifier {
     } finally {
       isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _writeCatalogCache(String providerKey, List<MediaItem> items) async {
+    try {
+      await _catalogCache.write(providerKey, items);
+    } catch (_) {
+      // A cache/storage failure must never prevent playback of a freshly loaded catalog.
     }
   }
 
@@ -156,9 +191,19 @@ class AppController extends ChangeNotifier {
 
   Future<void> _loadContent(IptvAccount source) async {
     isLoading = true;
+    errorMessage = null;
     notifyListeners();
     try {
+      // Use the on-device catalog immediately on later launches. Network refresh
+      // is explicit, so slow IPTV providers do not block every app startup.
+      final cached = await _catalogCache.read(source.providerKey);
+      if (cached != null && cached.isNotEmpty) {
+        _items = cached;
+        await _loadLibraryState(source);
+        return;
+      }
       _items = await _fetchContent(source);
+      await _writeCatalogCache(source.providerKey, _items);
       await _loadLibraryState(source);
       errorMessage = null;
     } finally {
@@ -184,6 +229,7 @@ class AppController extends ChangeNotifier {
     notifyListeners();
     try {
       _items = await _fetchContent(current);
+      await _writeCatalogCache(current.providerKey, _items);
       await _loadLibraryState(current);
     } catch (error) {
       errorMessage = _friendlyError(error);
@@ -192,6 +238,12 @@ class AppController extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  void clearErrorMessage() {
+    if (errorMessage == null) return;
+    errorMessage = null;
+    notifyListeners();
   }
 
   Future<void> retryConnection() async {
@@ -261,9 +313,18 @@ class AppController extends ChangeNotifier {
 
   Future<List<MediaItem>> loadEpisodes(MediaItem show) async {
     final current = account;
-    if (current == null || current.source != IptvSource.xtream || show.seriesId.isEmpty) return const [];
+    if (current == null || show.seriesId.isEmpty) return const [];
     try {
-      final result = await _xtreamService.getSeriesEpisodes(current, show.seriesId);
+      final List<MediaItem> result;
+      if (current.source == IptvSource.xtream) {
+        result = await _xtreamService.getSeriesEpisodes(current, show.seriesId);
+      } else {
+        result = _items.where((item) => item.type == MediaType.episode && item.seriesId == show.seriesId).toList()
+          ..sort((a, b) {
+            final season = a.seasonNumber.compareTo(b.seasonNumber);
+            return season != 0 ? season : a.episodeNumber.compareTo(b.episodeNumber);
+          });
+      }
       if (!showAdultContent) return result.where((item) => !item.isAdult).toList();
       return result;
     } catch (error) {
@@ -327,6 +388,7 @@ class AppController extends ChangeNotifier {
       throw const IptvConnectionException('O PIN deve ter entre 4 e 8 números.');
     }
     await _libraryStore.setPin(current.providerKey, pin);
+    notifyListeners();
   }
 
   Future<bool> verifyParentalPin(String pin) async {
@@ -339,7 +401,7 @@ class AppController extends ChangeNotifier {
     final current = account;
     if (current == null) return;
     showAdultContent = show;
-    // Never persist an unlocked state across app restarts.
+    // Unlock is intentionally session-only; only the PIN hash is persisted.
     await _libraryStore.writeAdultVisibility(current.providerKey, false);
     notifyListeners();
   }

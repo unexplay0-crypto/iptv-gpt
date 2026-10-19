@@ -203,6 +203,11 @@ class M3uParser {
           ? line.split('/').last
           : _titleFromExtinf(extinf).trim();
       final inferred = _inferType(group, title, extinf);
+      final episode = _episodeParts(title);
+      final seriesTitle = episode?['title'] as String?;
+      final seriesId = inferred == MediaType.episode && seriesTitle != null
+          ? MediaItem.stableId(providerKey, 'series', seriesTitle.toLowerCase())
+          : '';
       final canonical = '$providerKey|${inferred.name}|$tvgId|$title|$line';
       final id = sha256.convert(utf8.encode(canonical)).toString().substring(0, 32);
       result.add(MediaItem(
@@ -210,9 +215,12 @@ class M3uParser {
         title: title,
         type: inferred,
         streamUrl: line,
-        groupTitle: group.isEmpty ? 'Geral' : group,
+        groupTitle: seriesTitle ?? (group.isEmpty ? 'Geral' : group),
         posterUrl: logo,
         tvgId: tvgId,
+        seriesId: seriesId,
+        seasonNumber: episode?['season'] as int? ?? 0,
+        episodeNumber: episode?['episode'] as int? ?? 0,
         headers: Map<String, String>.from(headers),
         isAdult: MediaItem.inferAdult('$group $title'),
       ));
@@ -220,6 +228,25 @@ class M3uParser {
       headers.clear();
     }
     return result;
+  }
+
+  Map<String, Object>? _episodeParts(String title) {
+    final patterns = <RegExp>[
+      RegExp(r'^(.*?)\s+S(\d{1,2})\s*E(\d{1,3})\b', caseSensitive: false),
+      RegExp(r'^(.*?)\s+(\d{1,2})x(\d{1,3})\b', caseSensitive: false),
+      RegExp(r'^(.*?)\s+Season\s*(\d{1,2})\s*Episode\s*(\d{1,3})\b', caseSensitive: false),
+      RegExp(r'^(.*?)\s+Temporada\s*(\d{1,2})\s*Epis[oó]dio\s*(\d{1,3})\b', caseSensitive: false),
+    ];
+    for (final pattern in patterns) {
+      final match = pattern.firstMatch(title.trim());
+      if (match == null) continue;
+      final name = (match.group(1)?.trim() ?? '').replaceAll(RegExp(r'[\s\-–:|]+$'), '');
+      if (name.isEmpty) continue;
+      final season = int.tryParse(match.group(2) ?? '') ?? 0;
+      final episode = int.tryParse(match.group(3) ?? '') ?? 0;
+      return {'title': name, 'season': season, 'episode': episode};
+    }
+    return null;
   }
 
   String? _attribute(String line, String name) {
@@ -248,6 +275,7 @@ class M3uParser {
         ? extinf
         : extinf.substring(0, extinf.length - titleFromExtinf.length);
     final explicitType = (_attribute(extinf, 'tvg-type') ?? _attribute(extinf, 'type') ?? '').toLowerCase();
+    if (_episodeParts(title) != null) return MediaType.episode;
     if (RegExp(r'\b(series|serie|tvshow|show)\b').hasMatch(explicitType)) return MediaType.series;
     if (RegExp(r'\b(movie|film|vod)\b').hasMatch(explicitType)) return MediaType.movie;
     final metadata = '${group.toLowerCase()} ${extinfMetadata.toLowerCase()}';
@@ -323,6 +351,44 @@ class MetadataService {
   }
 
   void dispose() => _client.close();
+}
+
+// ---- Persistent catalog cache for fast cold starts ----
+
+class CatalogCacheStore {
+  Future<File> _fileFor(String providerKey) async {
+    final directory = await getApplicationSupportDirectory();
+    final key = sha256.convert(utf8.encode(providerKey)).toString();
+    return File('${directory.path}/catalog_$key.json');
+  }
+
+  Future<List<MediaItem>?> read(String providerKey) async {
+    try {
+      final file = await _fileFor(providerKey);
+      if (!await file.exists()) return null;
+      final decoded = jsonDecode(await file.readAsString());
+      if (decoded is! List) return null;
+      final items = decoded.whereType<Map>().map((value) => MediaItem.fromJson(Map<String, dynamic>.from(value))).toList();
+      return items.isEmpty ? null : items;
+    } on Object {
+      return null;
+    }
+  }
+
+  Future<void> write(String providerKey, List<MediaItem> items) async {
+    if (items.isEmpty) return;
+    final file = await _fileFor(providerKey);
+    await file.parent.create(recursive: true);
+    final temporary = File('${file.path}.tmp');
+    await temporary.writeAsString(jsonEncode(items.map((item) => item.toJson()).toList()), flush: true);
+    if (await file.exists()) await file.delete();
+    await temporary.rename(file.path);
+  }
+
+  Future<void> clear(String providerKey) async {
+    final file = await _fileFor(providerKey);
+    if (await file.exists()) await file.delete();
+  }
 }
 
 // ---- Merged from services/playlist_service.dart ----

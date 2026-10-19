@@ -48,3 +48,14 @@ A regra `curly_braces_in_flow_control_structures` foi desativada explicitamente 
 - Documentação completa em `docs/REDESIGN_UX.md`.
 
 Validação estática realizada: exatamente 10 arquivos Dart em `lib/`, imports internos resolvidos, workflows YAML válidos e delimitadores balanceados. `flutter analyze`, `flutter test` e build não foram executados neste ambiente porque o SDK Flutter/Dart não está instalado.
+
+
+## Correções adicionais — controle parental, catálogo e séries
+
+- PIN parental: estados de salvamento protegidos, mensagens para falhas e desabilitação temporária dos controles enquanto a operação está em andamento. A alteração continua exigindo o PIN anterior quando já existe um PIN cadastrado.
+- Início rápido: cache de catálogo em arquivo JSON no armazenamento privado, chaveado por hash do identificador do provedor. Inicializações seguintes leem o cache local; a atualização manual consulta o servidor e substitui o cache quando consegue.
+- Erros: banner superior reduzido, com ações de tentar novamente e fechar.
+- Celular: barra global mais baixa, pesquisa como ação principal, filtros em linha e cabeçalho de catálogo mais compacto.
+- Séries: episódios Xtream agrupados por temporada expansível; o parser M3U reconhece padrões comuns de temporada/episódio e cria uma entrada de série para cada grupo.
+
+**Limite da validação:** este ambiente não contém o SDK Flutter/Dart; os testes automatizados, `flutter analyze` e build Android precisam ser executados no workflow do GitHub antes de publicar.

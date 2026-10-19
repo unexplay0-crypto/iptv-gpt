@@ -98,3 +98,12 @@ Consulte [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md). Ainda é necessário testar u
 ## Redesign de experiência
 
 A direção visual foi atualizada para uma identidade de streaming escura com acento violeta, estados de foco de maior contraste, cards renovados e ajustes de densidade responsiva para celular e TV. A especificação de UX, navegação, acessibilidade e validação está em [`docs/REDESIGN_UX.md`](docs/REDESIGN_UX.md).
+
+
+## Correções de experiência e início rápido
+
+- O catálogo é salvo em JSON no armazenamento privado do aplicativo, separado por conta/provedor. Após a primeira carga, o aplicativo abre pelo catálogo local e a opção **Atualizar lista** busca alterações no servidor.
+- A barra superior no celular foi reduzida e deixa pesquisa como ação principal; atualização e configurações ficam na navegação secundária. Busca e filtro de categoria compartilham uma única linha em telas estreitas.
+- O aviso de falha no topo agora é compacto e pode ser fechado ou usado para tentar novamente.
+- O controle parental confirma o PIN atual antes de permitir a troca, informa falhas de armazenamento e exige o PIN para liberar conteúdo adulto. O desbloqueio é temporário e volta a bloquear ao reiniciar.
+- Séries Xtream mostram episódios agrupados em temporadas expansíveis. Playlists M3U com nomes de episódios no padrão `S01E02`, `Season 1 Episode 2` ou `Temporada 1 Episódio 2` são agrupadas por série.

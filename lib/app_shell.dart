@@ -41,7 +41,7 @@ class _ShellScreenState extends State<ShellScreen> {
   void _playItem(MediaItem item) {
     final controller = widget.controller;
     final account = controller.account;
-    if (item.type == MediaType.series && account?.source == IptvSource.xtream && item.seriesId.isNotEmpty) {
+    if (item.type == MediaType.series && item.seriesId.isNotEmpty) {
       Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (_) => SeriesDetailScreen(controller: controller, series: item, onPlay: _playItem),
       ));
@@ -115,14 +115,15 @@ class _ShellScreenState extends State<ShellScreen> {
                 if (widget.controller.errorMessage != null)
                   Container(
                     width: double.infinity,
-                    margin: EdgeInsets.fromLTRB(tvLayout ? 30 : 14, 0, tvLayout ? 30 : 14, 7),
-                    padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-                    decoration: BoxDecoration(color: const Color(0xFF40212A), borderRadius: BorderRadius.circular(10)),
+                    margin: EdgeInsets.fromLTRB(tvLayout ? 30 : 12, 0, tvLayout ? 30 : 12, 5),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(color: const Color(0xFF40212A), borderRadius: BorderRadius.circular(9)),
                     child: Row(children: [
-                      const Icon(Icons.warning_amber_rounded, color: Color(0xFFFFB4BD), size: 19),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(widget.controller.errorMessage!, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFFFD0D5), fontSize: 12))),
-                      TextButton(onPressed: _refresh, child: const Text('Tentar')),
+                      const Icon(Icons.warning_amber_rounded, color: Color(0xFFFFB4BD), size: 17),
+                      const SizedBox(width: 7),
+                      Expanded(child: Text(widget.controller.errorMessage!, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFFFD0D5), fontSize: 11))),
+                      IconButton(tooltip: 'Tentar novamente', visualDensity: VisualDensity.compact, constraints: const BoxConstraints.tightFor(width: 34, height: 34), onPressed: _refresh, icon: const Icon(Icons.refresh_rounded, size: 17)),
+                      IconButton(tooltip: 'Fechar aviso', visualDensity: VisualDensity.compact, constraints: const BoxConstraints.tightFor(width: 30, height: 34), onPressed: widget.controller.clearErrorMessage, icon: const Icon(Icons.close_rounded, size: 16)),
                     ]),
                   ),
                 if (widget.controller.isLoading) const LinearProgressIndicator(minHeight: 2, color: AppTheme.accent, backgroundColor: AppTheme.surface),
@@ -211,9 +212,9 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        height: tvLayout ? 82 : 62,
+        height: tvLayout ? 82 : 46,
         child: Padding(
-          padding: EdgeInsets.fromLTRB(tvLayout ? 34 : 16, 4, tvLayout ? 34 : 12, 4),
+          padding: EdgeInsets.fromLTRB(tvLayout ? 34 : 10, 2, tvLayout ? 34 : 8, 2),
           child: Row(children: [
             if (!tvLayout) ...[
               Container(
@@ -223,9 +224,7 @@ class _TopBar extends StatelessWidget {
                 child: const Icon(Icons.play_arrow_rounded, color: Color(0xFF100E1C), size: 27),
               ),
               const SizedBox(width: 10),
-              const Text('UNEX', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1, fontSize: 14)),
-              const SizedBox(width: 4),
-              const Text('VISION', style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 1.1, fontSize: 14, color: AppTheme.textMuted)),
+              const Text('UNEX VISION', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.6, fontSize: 12, color: AppTheme.textMuted)),
             ] else ...[
               Text('Descubra algo para assistir', style: Theme.of(context).textTheme.titleLarge),
               const Spacer(),
@@ -237,8 +236,10 @@ class _TopBar extends StatelessWidget {
             ],
             if (!tvLayout) const Spacer(),
             _TopAction(icon: Icons.search_rounded, label: 'Buscar', onPressed: onSearch, tvLayout: tvLayout),
-            _TopAction(icon: Icons.refresh_rounded, label: 'Atualizar lista', onPressed: onRefresh, tvLayout: tvLayout),
-            _TopAction(icon: Icons.settings_outlined, label: 'Configurações', onPressed: onSettings, tvLayout: tvLayout),
+            if (tvLayout) ...[
+              _TopAction(icon: Icons.refresh_rounded, label: 'Atualizar lista', onPressed: onRefresh, tvLayout: tvLayout),
+              _TopAction(icon: Icons.settings_outlined, label: 'Configurações', onPressed: onSettings, tvLayout: tvLayout),
+            ],
           ]),
         ),
       );
@@ -258,12 +259,12 @@ class _TopAction extends StatelessWidget {
           tooltip: label,
           onPressed: onPressed,
           style: IconButton.styleFrom(
-            minimumSize: Size(tvLayout ? 50 : 42, tvLayout ? 50 : 42),
+            minimumSize: Size(tvLayout ? 50 : 36, tvLayout ? 50 : 36),
             backgroundColor: const Color(0xFF171922),
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: AppTheme.outline)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11), side: const BorderSide(color: AppTheme.outline)),
           ),
-          icon: Icon(icon, size: tvLayout ? 23 : 21),
+          icon: Icon(icon, size: tvLayout ? 23 : 19),
         ),
       );
 }
