@@ -1,0 +1,34 @@
+# Correções aplicadas ao UNEX Vision
+
+## O que foi alterado
+
+- CI: `flutter analyze --no-pub --no-fatal-infos` nos workflows Android e Release; os `info` de lint não interrompem a execução, mas erros e warnings continuam a falhar.
+- CI: formatação Dart é aplicada antes da análise, testes e builds.
+- Catálogo M3U: URL/arquivo com cabeçalho válido, mas sem entradas reproduzíveis, agora é rejeitado com mensagem clara. Arquivos importados são validados antes de serem gravados no armazenamento do app.
+- Playlists locais: a identidade agora usa um SHA-256 do conteúdo importado e é serializada na conta; listas com o mesmo nome mas conteúdo diferente não misturam favoritos, histórico e progresso.
+- Classificação M3U: considera metadados de tipo e categorias antes de usar palavras no título; continua heurística porque M3U não tem classificação universal padronizada.
+- EPG XMLTV: cria um mapa de `channel id` para `display-name` e usa esse nome como fallback quando o `tvg-id` do provedor difere do ID XMLTV.
+- Xtream: se todos os endpoints de catálogo falharem, é retornado um erro específico em vez de apresentar um catálogo vazio sem contexto; respostas parciais ainda são aceitas.
+- PIN parental: o desbloqueio de conteúdo adulto é apenas da sessão e volta a ocultar o conteúdo ao reiniciar/carregar conta. PINs novos usam PBKDF2-HMAC-SHA256 com salt aleatório e 60.000 iterações; hashes antigos são verificados e migrados após autenticação válida. O bloqueio após tentativas incorretas continua ativo.
+- Catálogo: substituído o parâmetro depreciado `DropdownButtonFormField.value` por `initialValue`.
+- Testes: adicionados testes para identidade de listas importadas, M3U vazia/inválida e associação XMLTV por nome de canal.
+
+## Validação e limitações
+
+Os workflows e o script Python de configuração Android foram verificados estaticamente, e os YAML foram carregados por parser. Este ambiente não possui Flutter/Dart SDK; portanto não foi possível executar `flutter pub get`, `dart format`, `flutter analyze`, `flutter test`, `flutter build apk` nem `flutter build appbundle`. A compilação só pode ser confirmada após a execução do GitHub Actions. O projeto não inclui `pubspec.lock` porque ele precisa ser gerado pelo resolvedor Flutter real (`flutter pub get`) e versionado depois de validar as versões.
+
+## Reforço de qualidade contínua (19/10/2026)
+
+- A CI agora executa `dart format --output=none --set-exit-if-changed lib test`: a formatação é verificada sem modificar arquivos silenciosamente durante o workflow.
+- A CI usa `flutter analyze --no-pub` sem `--no-fatal-infos`, de modo que avisos informativos também precisam ser corrigidos em vez de ocultados.
+- O fluxo de build continua executando testes e builds de APK/AAB antes de disponibilizar artefatos.
+- As correções funcionais descritas nas seções anteriores devem ser consideradas confirmadas apenas quando os workflows passarem. Neste ambiente não há Flutter/Dart instalado, então não foi possível executar análise, testes ou compilação localmente.
+
+
+## Consolidação para 10 arquivos Dart (19/10/2026)
+
+- Consolidado o código de produção de `lib/` em exatamente 10 arquivos Dart, agrupados por domínio; os testes continuam em `test/`.
+- Atualizados imports internos e imports dos testes para apontar às novas bibliotecas.
+- Atualizada a documentação de arquitetura.
+- Os workflows agora aplicam `dart format lib test` antes da análise, para que uma diferença de formatação não interrompa o pipeline antes de análise/testes/build. A formatação é feita no workspace efêmero do CI, não é enviada de volta ao repositório.
+- Limitação: este ambiente não tem Dart/Flutter e não possui acesso de rede para instalar o SDK; por isso não foi possível executar `flutter analyze`, testes ou builds. A ausência de erros de compilação só pode ser afirmada depois de um workflow bem-sucedido.

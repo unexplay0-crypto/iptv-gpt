@@ -20,22 +20,28 @@ Projeto Flutter preparado para compilar APK e AAB via GitHub Actions. A interfac
 - Verificação de versão publicada no GitHub Releases e abertura do APK de release para download manual.
 - CI para `dart format`, `flutter analyze`, `flutter test`, APK release e AAB. Criar uma tag `v1.0.0` (ou maior) publica os artefatos no GitHub Releases.
 
-## Arquitetura
+## Arquitetura compacta (10 arquivos Dart em `lib/`)
+
+Para reduzir a quantidade de arquivos-fonte sem apagar funcionalidades, as bibliotecas foram agrupadas por responsabilidade. Os testes continuam separados em `test/`.
 
 ```text
 lib/
-  main.dart                      Inicialização, tema e roteamento inicial
-  core/                           Constantes e design system
-  models/                         Conta, mídia e programa de EPG
-  controllers/app_controller.dart Estado de sessão, catálogo e ações de usuário
-  services/                       Xtream, M3U, XMLTV, metadados, armazenamento e updates
-  screens/                        Login, navegação, home, catálogo, player, série, guia e ajustes
-  widgets/                        Cards e prateleiras de conteúdo
+  main.dart                         Inicialização do aplicativo
+  app_core.dart                     Constantes, tema e modelos
+  app_controller.dart               Estado e coordenação da aplicação
+  app_services.dart                 M3U, Xtream, XMLTV, metadados, persistência e updates
+  app_widgets.dart                  Cards e prateleiras reutilizáveis
+  app_screens_auth_home.dart        Login e tela inicial
+  app_screens_catalog_guide.dart    Catálogo e guia EPG
+  app_screens_details_settings.dart Detalhes de série e configurações
+  app_player.dart                   Player de vídeo
+  app_shell.dart                    Navegação e composição das telas
 
-test/                             Testes de parsing, URLs Xtream, XMLTV e PIN
-.github/workflows/                Build CI e publicação de release
+test/                               Testes unitários separados
+.github/workflows/                  Análise, testes e builds Android
 ```
 
+Essa compactação reduz a quantidade de arquivos, mas não reduz automaticamente os riscos de compilação. Por isso, o CI continua executando formatação, análise estática, testes e builds APK/AAB. A consolidação aumenta o tamanho de alguns arquivos, especialmente `app_services.dart`; se a manutenção se tornar mais difícil, a separação por domínio é preferível a manter um limite rígido de arquivos.
 ## Criar o repositório `IPTV`
 
 A integração GitHub disponível nesta conversa autenticou a conta `unexplay0-crypto`, mas retornou zero repositórios acessíveis e não expõe uma operação para criar um repositório vazio. Por isso, não foi possível gravar o conteúdo diretamente no GitHub nesta execução. O pacote inclui o projeto completo e os workflows, mas **não afirma que o repositório remoto já foi criado**.
