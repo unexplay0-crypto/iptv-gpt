@@ -20,28 +20,22 @@ Projeto Flutter preparado para compilar APK e AAB via GitHub Actions. A interfac
 - Verificação de versão publicada no GitHub Releases e abertura do APK de release para download manual.
 - CI para `dart format`, `flutter analyze`, `flutter test`, APK release e AAB. Criar uma tag `v1.0.0` (ou maior) publica os artefatos no GitHub Releases.
 
-## Arquitetura compacta (10 arquivos Dart em `lib/`)
-
-Para reduzir a quantidade de arquivos-fonte sem apagar funcionalidades, as bibliotecas foram agrupadas por responsabilidade. Os testes continuam separados em `test/`.
+## Arquitetura
 
 ```text
 lib/
-  main.dart                         Inicialização do aplicativo
-  app_core.dart                     Constantes, tema e modelos
-  app_controller.dart               Estado e coordenação da aplicação
-  app_services.dart                 M3U, Xtream, XMLTV, metadados, persistência e updates
-  app_widgets.dart                  Cards e prateleiras reutilizáveis
-  app_screens_auth_home.dart        Login e tela inicial
-  app_screens_catalog_guide.dart    Catálogo e guia EPG
-  app_screens_details_settings.dart Detalhes de série e configurações
-  app_player.dart                   Player de vídeo
-  app_shell.dart                    Navegação e composição das telas
+  main.dart                      Inicialização, tema e roteamento inicial
+  core/                           Constantes e design system
+  models/                         Conta, mídia e programa de EPG
+  controllers/app_controller.dart Estado de sessão, catálogo e ações de usuário
+  services/                       Xtream, M3U, XMLTV, metadados, armazenamento e updates
+  screens/                        Login, navegação, home, catálogo, player, série, guia e ajustes
+  widgets/                        Cards e prateleiras de conteúdo
 
-test/                               Testes unitários separados
-.github/workflows/                  Análise, testes e builds Android
+test/                             Testes de parsing, URLs Xtream, XMLTV e PIN
+.github/workflows/                Build CI e publicação de release
 ```
 
-Essa compactação reduz a quantidade de arquivos, mas não reduz automaticamente os riscos de compilação. Por isso, o CI continua executando formatação, análise estática, testes e builds APK/AAB. A consolidação aumenta o tamanho de alguns arquivos, especialmente `app_services.dart`; se a manutenção se tornar mais difícil, a separação por domínio é preferível a manter um limite rígido de arquivos.
 ## Criar o repositório `IPTV`
 
 A integração GitHub disponível nesta conversa autenticou a conta `unexplay0-crypto`, mas retornou zero repositórios acessíveis e não expõe uma operação para criar um repositório vazio. Por isso, não foi possível gravar o conteúdo diretamente no GitHub nesta execução. O pacote inclui o projeto completo e os workflows, mas **não afirma que o repositório remoto já foi criado**.
@@ -95,15 +89,3 @@ O workflow de release compila APK/AAB e publica ambos no GitHub Releases. O app 
 ## Testes manuais obrigatórios antes de distribuir
 
 Consulte [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md). Ainda é necessário testar um canal ao vivo, um VOD e um episódio reais em celular Android e Android TV/TV Box, incluindo credenciais especiais, URLs HTTP/HTTPS, erro 401/403/404, rede instável, controle remoto, PIN, cache e retomada. A compilação bem-sucedida não prova que todo provedor IPTV é compatível.
-## Redesign de experiência
-
-A direção visual foi atualizada para uma identidade de streaming escura com acento violeta, estados de foco de maior contraste, cards renovados e ajustes de densidade responsiva para celular e TV. A especificação de UX, navegação, acessibilidade e validação está em [`docs/REDESIGN_UX.md`](docs/REDESIGN_UX.md).
-
-
-## Correções de experiência e início rápido
-
-- O catálogo é salvo em JSON no armazenamento privado do aplicativo, separado por conta/provedor. Após a primeira carga, o aplicativo abre pelo catálogo local e a opção **Atualizar lista** busca alterações no servidor.
-- A barra superior no celular foi reduzida e deixa pesquisa como ação principal; atualização e configurações ficam na navegação secundária. Busca e filtro de categoria compartilham uma única linha em telas estreitas.
-- O aviso de falha no topo agora é compacto e pode ser fechado ou usado para tentar novamente.
-- O controle parental confirma o PIN atual antes de permitir a troca, informa falhas de armazenamento e exige o PIN para liberar conteúdo adulto. O desbloqueio é temporário e volta a bloquear ao reiniciar.
-- Séries Xtream mostram episódios agrupados em temporadas expansíveis. Playlists M3U com nomes de episódios no padrão `S01E02`, `Season 1 Episode 2` ou `Temporada 1 Episódio 2` são agrupadas por série.

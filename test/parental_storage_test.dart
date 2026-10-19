@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:iptv/app_services.dart';
+import 'package:iptv/services/local_library_store.dart';
 
 void main() {
   group('PIN parental', () {

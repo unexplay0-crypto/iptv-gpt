@@ -1,21 +1,13 @@
 # Arquitetura do UNEX Vision
 
-## Organização compacta
+## Camadas
 
-O código de produção em `lib/` foi consolidado em dez arquivos Dart para atender ao limite solicitado, sem remover as classes públicas utilizadas pelas telas, serviços ou testes:
-
-- `main.dart`: inicialização e widget raiz.
-- `app_core.dart`: constantes, tema, conta, mídia e EPG.
-- `app_controller.dart`: estado de sessão, catálogo, favoritos, histórico, EPG e configurações.
-- `app_services.dart`: serviços M3U, Xtream, XMLTV, metadados, atualização e persistência.
-- `app_widgets.dart`: cards e prateleiras de mídia.
-- `app_screens_auth_home.dart`: login e home.
-- `app_screens_catalog_guide.dart`: catálogo e guia.
-- `app_screens_details_settings.dart`: detalhes de série e configurações.
-- `app_player.dart`: player de vídeo.
-- `app_shell.dart`: navegação e composição das telas.
-
-Os testes permanecem em `test/` e importam as bibliotecas consolidadas. A consolidação não muda o modelo de dados ou o fluxo funcional intencionalmente; ela reduz a granularidade dos arquivos. Isso não é, por si só, garantia de menos erros, pois arquivos maiores são mais difíceis de revisar.
+- **UI (`screens/`, `widgets/`)**: telas adaptativas para celular e Android TV; nenhum widget monta endpoints IPTV por conta própria.
+- **Estado (`controllers/app_controller.dart`)**: sessão ativa, catálogo, filtros, favoritos, histórico, progresso, EPG e configurações.
+- **Domínio (`models/`)**: conta/fonte, mídia e programação EPG com identidade estável.
+- **Serviços (`services/`)**: parser M3U, Xtream API, download de playlist, XMLTV, metadados, atualização e persistência.
+- **Plataforma Android (`tooling/configure_android.py`)**: configura o Manifest gerado pelo Flutter para o app aparecer no launcher de Android TV, sem exigir touchscreen.
+- **CI (`.github/workflows/`)**: prepara o scaffold nativo Android, baixa dependências, formata, analisa, testa e compila APK/AAB.
 
 ## Fluxo de dados
 
@@ -34,7 +26,3 @@ Os testes permanecem em `test/` e importam as bibliotecas consolidadas. A consol
 - O reconhecimento de conteúdo adulto é heurístico e configurável, não é filtro infalível.
 - `video_player` aproveita o player de plataforma disponível no Android. Suporte real a contêineres, codecs, headers, redirecionamento, DRM e tipos de stream depende do servidor, do formato e da versão Android; não se promete que qualquer URL IPTV será reproduzida.
 - A atualização abre o APK anexado ao GitHub Releases, mas o Android continua controlando a confirmação de instalação.
-
-## CI
-
-O workflow aplica `dart format lib test` no workspace de CI antes de executar `flutter analyze --no-pub`, `flutter test --no-pub` e os builds APK/AAB. A formatação no CI normaliza o código do checkout; não grava essas alterações no repositório remoto. A validação final depende de executar o workflow em um ambiente com Flutter/Dart instalado.

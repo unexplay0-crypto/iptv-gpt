@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:iptv/app_core.dart';
-import 'package:iptv/app_services.dart';
+import 'package:iptv/models/media_item.dart';
+import 'package:iptv/services/m3u_parser.dart';
 
 void main() {
   const parser = M3uParser();
@@ -48,21 +48,6 @@ https://stream.example/live.ts
       expect(first, second);
       expect(first, isNot(otherProvider));
       expect(first, hasLength(32));
-    });
-
-    test('separa episódios M3U por série, temporada e número do episódio', () {
-      const playlist = '''#EXTM3U
-#EXTINF:-1 group-title="Séries",The Office S01E02 - Dundies
-https://stream.example/office-s01e02.mp4
-#EXTINF:-1 group-title="Séries",The Office S02E01 - The Dundies
-https://stream.example/office-s02e01.mp4
-''';
-      final items = parser.parse(playlist, providerKey: 'series-test');
-      expect(items.map((item) => item.type), everyElement(MediaType.episode));
-      expect(items.map((item) => item.seriesId).toSet(), hasLength(1));
-      expect(items.map((item) => item.groupTitle).toSet(), {'The Office'});
-      expect(items.map((item) => item.seasonNumber), [1, 2]);
-      expect(items.map((item) => item.episodeNumber), [2, 1]);
     });
 
     test('marca nomes de conteúdo adulto para que sejam ocultados pelo filtro parental', () {

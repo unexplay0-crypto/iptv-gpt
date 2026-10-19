@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:iptv/app_core.dart';
-import 'package:iptv/app_services.dart';
+import 'package:iptv/models/iptv_account.dart';
+import 'package:iptv/services/xtream_service.dart';
 
 void main() {
   group('Xtream URI builder', () {
