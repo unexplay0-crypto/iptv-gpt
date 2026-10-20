@@ -51,7 +51,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _video = null;
       await previous.dispose();
     }
-    if (!mounted || generation != _generation) return;
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _errorCode = null;

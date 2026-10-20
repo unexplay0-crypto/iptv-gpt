@@ -12,7 +12,6 @@ class XmltvService {
   final http.Client _client;
   final Map<String, List<EpgProgram>> _cache = {};
   final Map<String, DateTime> _cacheTime = {};
-  final Map<String, Map<String, List<String>>> _channelNamesByUrl = {};
 
   Future<List<EpgProgram>> programsFor(String url, {required String channelId, required String channelName}) async {
     final target = Uri.tryParse(url.trim());
@@ -40,17 +39,6 @@ class XmltvService {
       }
       try {
         final document = XmlDocument.parse(body);
-        final channelNames = <String, List<String>>{};
-        for (final channel in document.findAllElements('channel')) {
-          final id = channel.getAttribute('id')?.trim();
-          if (id == null || id.isEmpty) continue;
-          channelNames[id.toLowerCase()] = channel
-              .findElements('display-name')
-              .map((node) => node.innerText.trim().toLowerCase())
-              .where((name) => name.isNotEmpty)
-              .toList();
-        }
-        _channelNamesByUrl[key] = channelNames;
         programs = <EpgProgram>[];
         for (final element in document.findAllElements('programme').take(AppConstants.maxEpgPrograms)) {
           final titleNode = element.findElements('title').firstOrNull;
@@ -74,13 +62,9 @@ class XmltvService {
     }
     final wantedId = channelId.trim().toLowerCase();
     final wantedName = channelName.trim().toLowerCase();
-    final channelNames = _channelNamesByUrl[key] ?? const <String, List<String>>{};
     final matches = programs.where((item) {
-      final id = item.channelId.toLowerCase();
-      if (wantedId.isNotEmpty && id == wantedId) return true;
-      if (wantedName.isEmpty) return false;
-      final names = channelNames[id] ?? const <String>[];
-      return names.any((name) => name == wantedName || name.contains(wantedName) || wantedName.contains(name));
+      if (wantedId.isNotEmpty && item.channelId.toLowerCase() == wantedId) return true;
+      return wantedName.isNotEmpty && item.channelId.toLowerCase().contains(wantedName);
     }).toList()
       ..sort((a, b) => a.start.compareTo(b.start));
     return matches.where((item) => item.end.isAfter(DateTime.now())).take(30).toList();

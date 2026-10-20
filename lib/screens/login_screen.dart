@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -67,15 +66,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _importFile() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final file = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: const ['m3u', 'm3u8', 'txt'],
-        withData: true,
       );
-      if (result == null || result.files.isEmpty) return;
-      final file = result.files.single;
-      final bytes = file.bytes ?? (file.path == null ? null : await File(file.path!).readAsBytes());
-      if (bytes == null) throw const FormatException('Não foi possível ler o arquivo selecionado.');
+      if (file == null) return;
+      final bytes = await file.readAsBytes();
       final content = utf8.decode(bytes, allowMalformed: true);
       setState(() {
         _isBusy = true;

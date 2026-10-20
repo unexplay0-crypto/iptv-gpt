@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 
 import '../core/app_constants.dart';
@@ -174,10 +172,7 @@ class AppController extends ChangeNotifier {
     _favorites = await _libraryStore.readFavorites(source.providerKey);
     _history = await _secureStore.readHistory(source.providerKey);
     _progress = await _libraryStore.readProgress(source.providerKey);
-    // Adult-content access is a session-only unlock. Never restore a previous
-    // unlock after app restart or account reconnection; require the PIN again.
-    showAdultContent = false;
-    await _libraryStore.writeAdultVisibility(source.providerKey, false);
+    showAdultContent = await _libraryStore.readAdultVisibility(source.providerKey);
   }
 
   Future<void> refreshCatalog() async {

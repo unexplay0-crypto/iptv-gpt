@@ -90,7 +90,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                       SizedBox(
                         width: constraints.maxWidth > 620 ? 230 : constraints.maxWidth,
                         child: DropdownButtonFormField<String>(
-                          value: _groups.contains(_group) ? _group : 'Todas',
+                          initialValue: _groups.contains(_group) ? _group : 'Todas',
                           isExpanded: true,
                           decoration: const InputDecoration(labelText: 'Categoria', prefixIcon: Icon(Icons.filter_list_rounded)),
                           items: _groups.map((value) => DropdownMenuItem(value: value, child: Text(value, overflow: TextOverflow.ellipsis))).toList(),

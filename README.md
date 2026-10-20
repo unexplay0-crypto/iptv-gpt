@@ -36,15 +36,15 @@ test/                             Testes de parsing, URLs Xtream, XMLTV e PIN
 .github/workflows/                Build CI e publicação de release
 ```
 
-## Publicar no repositório existente
+## Criar o repositório `IPTV`
 
-Este pacote está alinhado ao repositório informado: `https://github.com/unexplay0-crypto/IPTV-APP`.
+A integração GitHub disponível nesta conversa autenticou a conta `unexplay0-crypto`, mas retornou zero repositórios acessíveis e não expõe uma operação para criar um repositório vazio. Por isso, não foi possível gravar o conteúdo diretamente no GitHub nesta execução. O pacote inclui o projeto completo e os workflows, mas **não afirma que o repositório remoto já foi criado**.
 
-1. Extraia o ZIP e abra a pasta raiz `IPTV/`.
-2. Substitua/adapte os arquivos no repositório, preservando a estrutura `.github`, `lib`, `test`, `tooling`, `pubspec.yaml` e `README.md`. Revise as alterações antes de confirmar o commit.
+1. Na conta `unexplay0-crypto`, crie um repositório vazio chamado **IPTV** (recomendado privado durante o desenvolvimento).
+2. Envie o conteúdo desta pasta raiz para o repositório, mantendo a estrutura `.github`, `lib`, `test`, `tooling`, `pubspec.yaml` e `README.md`.
 3. Aguarde o workflow **Build Android APK and AAB** em **Actions**. Ao concluir, baixe o artefato `UNEX-Vision-Android`.
 
-A configuração de atualização do app consulta os releases desse repositório. A consulta de releases é pública; se o repositório permanecer privado, o recurso de atualização não funcionará sem autenticação adicional.
+O repositório remoto esperado é `https://github.com/unexplay0-crypto/IPTV`.
 
 ## Compilar localmente
 
