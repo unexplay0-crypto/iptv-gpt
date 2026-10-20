@@ -174,7 +174,10 @@ class AppController extends ChangeNotifier {
     _favorites = await _libraryStore.readFavorites(source.providerKey);
     _history = await _secureStore.readHistory(source.providerKey);
     _progress = await _libraryStore.readProgress(source.providerKey);
-    showAdultContent = await _libraryStore.readAdultVisibility(source.providerKey);
+    // Adult-content access is a session-only unlock. Never restore a previous
+    // unlock after app restart or account reconnection; require the PIN again.
+    showAdultContent = false;
+    await _libraryStore.writeAdultVisibility(source.providerKey, false);
   }
 
   Future<void> refreshCatalog() async {

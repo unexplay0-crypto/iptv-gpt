@@ -21,6 +21,7 @@ class _GuideScreenState extends State<GuideScreen> {
   List<EpgProgram> _programs = [];
   bool _loading = false;
   String? _error;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -32,13 +33,14 @@ class _GuideScreenState extends State<GuideScreen> {
   }
 
   Future<void> _load(MediaItem channel) async {
+    final generation = ++_loadGeneration;
     setState(() { _selected = channel; _loading = true; _error = null; _programs = []; });
     try {
       final programs = await widget.controller.loadPrograms(channel);
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() { _programs = programs; _loading = false; });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() { _error = error.toString(); _loading = false; });
     }
   }

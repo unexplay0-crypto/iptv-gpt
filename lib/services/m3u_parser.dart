@@ -1,5 +1,6 @@
-import 'package:crypto/crypto.dart';
 import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 
 import '../models/media_item.dart';
 
